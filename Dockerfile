@@ -14,7 +14,7 @@ COPY package.json yarn.lock ./
 RUN yarn install --production
 
 COPY . .
-COPY --from=build dist/ ./
+COPY --from=build /app/dist/ ./
 
 EXPOSE 3000
 ENV NODE_ENV=production
