@@ -6,11 +6,11 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from "typeorm";
-import { Category } from "./Category";
 import { FileType } from "./FileType";
+import { Category } from "./Category";
 
-@Index("categoryId", ["categoryId"], {})
 @Index("fileTypeId", ["fileTypeId"], {})
+@Index("categoryId", ["categoryId"], {})
 @Entity("Document", { schema: "AllCrawler" })
 export class Document {
   @PrimaryGeneratedColumn({ type: "int", name: "id" })
@@ -34,17 +34,17 @@ export class Document {
   @Column("int", { name: "fileTypeId" })
   fileTypeId: number;
 
-  @ManyToOne(() => Category, (category) => category.documents, {
-    onDelete: "RESTRICT",
-    onUpdate: "RESTRICT",
-  })
-  @JoinColumn([{ name: "categoryId", referencedColumnName: "id" }])
-  category: Category;
-
   @ManyToOne(() => FileType, (fileType) => fileType.documents, {
     onDelete: "RESTRICT",
     onUpdate: "RESTRICT",
   })
   @JoinColumn([{ name: "fileTypeId", referencedColumnName: "id" }])
   fileType: FileType;
+
+  @ManyToOne(() => Category, (category) => category.documents, {
+    onDelete: "RESTRICT",
+    onUpdate: "RESTRICT",
+  })
+  @JoinColumn([{ name: "categoryId", referencedColumnName: "id" }])
+  category: Category;
 }

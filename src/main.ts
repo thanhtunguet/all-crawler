@@ -18,6 +18,9 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   await app.listen(PORT);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Website is running on http://0.0.0.0:3000/api');
+  }
 }
 
 bootstrap();
