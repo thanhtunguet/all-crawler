@@ -27,4 +27,9 @@ export class GritCenterController {
   public async googleDocs() {
     return await this.service.googleDocs();
   }
+
+  @Get('google-docs-links')
+  public async googleDocsLinks() {
+    return await this.service.googleDocsLinks();
+  }
 }

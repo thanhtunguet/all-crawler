@@ -135,4 +135,20 @@ export class GritCenterService {
     }
     return links;
   };
+
+  public async googleDocsLinks() {
+    return this.gritGoogleDocsRepository
+      .createQueryBuilder('gritGoogleDocs')
+      .select('gritDocumentId, gritArticleId, googleDocsLink', 'googleDocsLink')
+      .groupBy('fileId')
+      .getRawMany()
+      .then((results) =>
+        results.map(({ googleDocsLink, gritArticleId, gritDocumentId }) => {
+          return {
+            link: googleDocsLink,
+            id: Number(gritArticleId) || Number(gritDocumentId),
+          };
+        }),
+      );
+  }
 }
