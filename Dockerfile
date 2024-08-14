@@ -18,4 +18,4 @@ COPY --from=build /app/dist/ ./
 
 EXPOSE 3000
 ENV NODE_ENV=production
-ENTRYPOINT [ "node", "dist/src/main" ]
+CMD [ "node", "dist/src/main" ]
