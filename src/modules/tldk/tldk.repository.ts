@@ -2,14 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { LinkPage } from 'src/entities';
+import { TldkCategory, TldkLink } from 'src/entities';
 import { Repository } from 'typeorm';
 
 @Injectable()
 class TaiLieuDieuKyRepository {
   constructor(
-    @InjectRepository(LinkPage)
-    private readonly linkPageRepository: Repository<LinkPage>,
+    @InjectRepository(TldkLink)
+    private readonly linkPageRepository: Repository<TldkLink>,
+    @InjectRepository(TldkCategory)
+    private readonly categoryRepository: Repository<TldkCategory>,
   ) {}
 
   async getLastPage(link: string): Promise<number> {
@@ -65,31 +67,32 @@ class TaiLieuDieuKyRepository {
     }
   }
 
-  async getListMasterPages(): Promise<
-    { categoryLink: string; lastPage: number }[]
-  > {
+  async getListMasterPages(): Promise<TldkCategory[]> {
     try {
       const response = await axios.get(
         'https://tailieudieuky.com/baiviet/tai-lieu-va-ebook/',
       );
       const $ = cheerio.load(response.data);
-      const promises: Promise<{ categoryLink: string; lastPage: number }>[] =
-        [];
+      const promises: Promise<TldkCategory>[] = [];
 
       $('.pagelayer-btn-holder.pagelayer-ele-link.pagelayer-btn-custom').each(
         (index, element) => {
           const href = $(element).attr('href');
           if (href) {
-            const promise = this.getLastPage(href).then((lastPage) => ({
-              categoryLink: href,
-              lastPage,
-            }));
+            const promise = this.getLastPage(href).then((lastPage) => {
+              const tldk: TldkCategory = this.categoryRepository.create();
+              tldk.categoryLink = href;
+              tldk.numberOfPage = lastPage;
+              return tldk;
+            });
             promises.push(promise);
           }
         },
       );
 
-      return await Promise.all(promises);
+      const links = await Promise.all(promises);
+      await this.categoryRepository.save(links);
+      return links;
     } catch (error) {
       console.error('Error getting list master pages:', error);
       throw error;

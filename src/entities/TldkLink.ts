@@ -1,7 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity()
-export class LinkPage {
+@Entity('TldkLink', { schema: 'AllCrawler' })
+export class TldkLink {
   @PrimaryGeneratedColumn()
   id?: number;
 

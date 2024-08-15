@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Category, LinkPage, Website } from 'src/entities';
+import { Category, TldkCategory, TldkLink, Website } from 'src/entities';
 import { TldkController } from './tldk.controller';
 import TaiLieuDieuKyRepository from './tldk.repository';
 import { TldkService } from './tldk.service';
@@ -8,6 +8,8 @@ import { TldkService } from './tldk.service';
 @Module({
   providers: [TldkService, TaiLieuDieuKyRepository],
   controllers: [TldkController],
-  imports: [TypeOrmModule.forFeature([Website, Category, LinkPage])],
+  imports: [
+    TypeOrmModule.forFeature([Website, Category, TldkLink, TldkCategory]),
+  ],
 })
 export class TldkModule {}

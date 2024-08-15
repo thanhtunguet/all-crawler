@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LinkPage } from 'src/entities';
+import { TldkLink } from 'src/entities/TldkLink';
 import { Repository } from 'typeorm';
 import TaiLieuDieuKyRepository from './tldk.repository';
 
@@ -25,15 +25,15 @@ export class TldkService {
 
   constructor(
     private readonly repository: TaiLieuDieuKyRepository,
-    @InjectRepository(LinkPage)
-    private readonly linkPageRepository: Repository<LinkPage>,
+    @InjectRepository(TldkLink)
+    private readonly linkPageRepository: Repository<TldkLink>,
   ) {}
 
   async crawl(): Promise<void> {
     const masterPages = await this.repository.getListMasterPages();
     for (const masterPage of masterPages) {
-      const { categoryLink, lastPage } = masterPage;
-      for (let page = 1; page <= lastPage; page++) {
+      const { categoryLink, numberOfPage } = masterPage;
+      for (let page = 1; page <= numberOfPage; page++) {
         const ebookLinks = await this.repository.getEbookLinks(
           categoryLink,
           page,
