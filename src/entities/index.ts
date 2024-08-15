@@ -1,13 +1,15 @@
-export {Category} from './Category';
+export { Category } from './Category';
 
-export {Document} from './Document';
+export { Document } from './Document';
 
-export {FileType} from './FileType';
+export { FileType } from './FileType';
 
-export {GritArticle} from './GritArticle';
+export { GritArticle } from './GritArticle';
 
-export {GritDocument} from './GritDocument';
+export { GritDocument } from './GritDocument';
 
-export {GritGoogleDocs} from './GritGoogleDocs';
+export { GritGoogleDocs } from './GritGoogleDocs';
 
-export {Website} from './Website';
+export { LinkPage } from './LinkPage';
+
+export { Website } from './Website';

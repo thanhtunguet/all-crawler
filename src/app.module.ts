@@ -11,8 +11,9 @@ import {
   DB_USERNAME,
 } from './config/dotenv';
 import * as entities from './entities';
-import { GritCenterModule } from './grit-center/grit-center.module';
-import { WebsiteModule } from './website/website.module';
+import { GritCenterModule } from './modules/grit-center/grit-center.module';
+import { TldkModule } from './modules/tldk/tldk.module';
+import { WebsiteModule } from './modules/website/website.module';
 
 @Module({
   imports: [
@@ -24,10 +25,11 @@ import { WebsiteModule } from './website/website.module';
       password: DB_PASSWORD,
       database: DB_DATABASE,
       entities: Object.values(entities),
-      synchronize: false,
+      synchronize: true,
     }),
     WebsiteModule,
     GritCenterModule,
+    TldkModule,
   ],
   controllers: [AppController],
   providers: [AppService],
