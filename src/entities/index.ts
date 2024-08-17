@@ -14,4 +14,6 @@ export {TldkCategory} from './TldkCategory';
 
 export {TldkLink} from './TldkLink';
 
+export {TldkLog} from './TldkLog';
+
 export {Website} from './Website';

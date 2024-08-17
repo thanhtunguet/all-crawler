@@ -11,6 +11,7 @@ import {
   DB_USERNAME,
 } from './config/dotenv';
 import * as entities from './entities';
+import { GoogleModule } from './modules/google/google.module';
 import { GritCenterModule } from './modules/grit-center/grit-center.module';
 import { TldkModule } from './modules/tldk/tldk.module';
 import { WebsiteModule } from './modules/website/website.module';
@@ -30,6 +31,7 @@ import { WebsiteModule } from './modules/website/website.module';
     WebsiteModule,
     GritCenterModule,
     TldkModule,
+    GoogleModule,
   ],
   controllers: [AppController],
   providers: [AppService],

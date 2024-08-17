@@ -1,19 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { TldkCategory, TldkLink } from 'src/entities';
-import { Repository } from 'typeorm';
+import { TldkCategory } from 'src/entities';
 
 @Injectable()
 class TaiLieuDieuKyRepository {
-  constructor(
-    @InjectRepository(TldkLink)
-    private readonly linkPageRepository: Repository<TldkLink>,
-    @InjectRepository(TldkCategory)
-    private readonly categoryRepository: Repository<TldkCategory>,
-  ) {}
-
   async getLastPage(link: string): Promise<number> {
     try {
       const response = await axios.get(link);
@@ -34,7 +25,7 @@ class TaiLieuDieuKyRepository {
       const response = await axios.get(link);
       const $ = cheerio.load(response.data);
       const ebookLinks: string[] = [];
-      $('.ebook-link').each((index, element) => {
+      $('.download').each((index, element) => {
         const href = $(element).attr('href');
         if (href) ebookLinks.push(href);
       });
@@ -52,12 +43,26 @@ class TaiLieuDieuKyRepository {
     try {
       const response = await axios.get(link);
       const $ = cheerio.load(response.data);
+
+      const downloadLinks = [];
+
       const articleLinks: string[] = [];
-      $('.article-link').each((index, element) => {
+
+      $('a[rel="bookmark"]').each((index, element) => {
         const href = $(element).attr('href');
         if (href) articleLinks.push(href);
       });
-      return articleLinks;
+
+      for (const articleLink of articleLinks) {
+        const res = await axios.get(articleLink);
+        const $ = cheerio.load(res.data);
+        $('p.download a').each(function () {
+          const downloadHref = $(this).attr('href');
+          downloadLinks.push(downloadHref);
+        });
+      }
+
+      return downloadLinks;
     } catch (error) {
       console.error(
         `Error getting article links from ${link} page ${page}:`,
@@ -80,7 +85,7 @@ class TaiLieuDieuKyRepository {
           const href = $(element).attr('href');
           if (href) {
             const promise = this.getLastPage(href).then((lastPage) => {
-              const tldk: TldkCategory = this.categoryRepository.create();
+              const tldk: TldkCategory = new TldkCategory();
               tldk.categoryLink = href;
               tldk.numberOfPage = lastPage;
               return tldk;
@@ -91,7 +96,7 @@ class TaiLieuDieuKyRepository {
       );
 
       const links = await Promise.all(promises);
-      await this.categoryRepository.save(links);
+
       return links;
     } catch (error) {
       console.error('Error getting list master pages:', error);

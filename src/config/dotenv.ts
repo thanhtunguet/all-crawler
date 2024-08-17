@@ -9,3 +9,7 @@ export const DB_PASSWORD = process.env.DB_PASSWORD;
 export const DB_DATABASE = process.env.DB_DATABASE;
 
 export const PORT = process.env.PORT ?? 3000;
+
+export const RABBITMQ_URL = process.env.RABBITMQ_URL;
+export const REDIS_URL = process.env.REDIS_URL;
+export const MQTT_URL = process.env.MQTT_URL;

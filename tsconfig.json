@@ -4,6 +4,11 @@
     "allowSyntheticDefaultImports": true,
     "allowUmdGlobalAccess": true,
     "baseUrl": ".",
+    "paths": {
+      "src/*": [
+        "src/*"
+      ]
+    },
     "declaration": true,
     "downlevelIteration": true,
     "emitDecoratorMetadata": true,
