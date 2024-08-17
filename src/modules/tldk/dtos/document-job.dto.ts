@@ -8,4 +8,9 @@ export class TldkDocumentJob extends TldkJob {
     type: 'string',
   })
   public link: string;
+
+  @ApiProperty({
+    type: 'string',
+  })
+  public name: string;
 }

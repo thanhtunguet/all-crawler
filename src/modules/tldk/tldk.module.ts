@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MQTT_URL, REDIS_URL } from 'src/config/dotenv';
+import { MQTT_URL } from 'src/config/dotenv';
+import { DatabaseModule } from 'src/database/database.module';
 import {
   Category,
   TldkCategory,
@@ -14,17 +15,11 @@ import { TldkController } from './tldk.controller';
 import TaiLieuDieuKyRepository from './tldk.repository';
 import { TldkService } from './tldk.service';
 
-const redisUrl = new URL(REDIS_URL);
-
-console.log({
-  host: redisUrl.host,
-  port: Number(redisUrl.port),
-});
-
 @Module({
   providers: [TldkService, TaiLieuDieuKyRepository],
   controllers: [TldkController],
   imports: [
+    DatabaseModule,
     TypeOrmModule.forFeature([
       Website,
       Category,

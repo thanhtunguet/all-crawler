@@ -10,6 +10,11 @@ export class TldkCategoryJob extends TldkJob {
   public link: string;
 
   @ApiProperty({
+    type: 'string',
+  })
+  public name: string;
+
+  @ApiProperty({
     type: 'number',
   })
   public page: number;
