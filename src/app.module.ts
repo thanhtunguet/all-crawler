@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import './config/dotenv';
-import { DatabaseModule } from './database/database.module';
+import { DatabaseModule } from './modules/database/database.module';
 import { GoogleModule } from './modules/google/google.module';
 import { GritCenterModule } from './modules/grit-center/grit-center.module';
 import { TldkModule } from './modules/tldk/tldk.module';

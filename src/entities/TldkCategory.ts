@@ -5,9 +5,15 @@ export class TldkCategory {
   @PrimaryGeneratedColumn()
   id?: number;
 
-  @Column()
+  @Column('text', { nullable: true })
+  name?: string;
+
+  @Column('text', { nullable: true })
+  slug?: string;
+
+  @Column('text', { nullable: true })
   categoryLink?: string;
 
-  @Column()
+  @Column('int', { nullable: true })
   numberOfPage?: number;
 }

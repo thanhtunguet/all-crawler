@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MQTT_URL } from 'src/config/dotenv';
-import { DatabaseModule } from 'src/database/database.module';
 import {
   Category,
   TldkCategory,
@@ -10,6 +9,7 @@ import {
   TldkLog,
   Website,
 } from 'src/entities';
+import { DatabaseModule } from 'src/modules/database/database.module';
 import { GoogleModule } from '../google/google.module';
 import { TldkController } from './tldk.controller';
 import TaiLieuDieuKyRepository from './tldk.repository';

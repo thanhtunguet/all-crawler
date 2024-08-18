@@ -40,29 +40,37 @@ export class GoogleService {
     }
   }
 
-  public async downloadAsDocx(url: string): Promise<Buffer | null> {
+  public async downloadAsDocx(
+    url: string,
+    name: string,
+  ): Promise<{
+    content: Buffer;
+    name: string | null;
+  }> {
     const fileId = this.extractFileId(url);
     if (
       this.isGoogleDocs(url) ||
       (this.isGoogleDriveFile(url) && this.isDocFile(url))
     ) {
       const exportUrl = `https://docs.google.com/feeds/download/documents/export/Export?id=${fileId}&exportFormat=docx`;
-      return this.downloadFile(exportUrl);
+      return this.downloadFile(exportUrl, name);
     }
     return null;
   }
 
-  public async downloadLink(url: string): Promise<void> {
+  public async downloadLink(url: string, name: string): Promise<void> {
     if (this.isGoogleLink(url)) {
       if (this.isGoogleDriveFile(url) || this.isDocFile(url)) {
-        const fileBuffer = await this.download(url);
-        if (fileBuffer) {
-          const fileName = `${this.getId(url)}.docx`; // Assuming the file is a docx
-          const filePath = path.join('downloads', fileName);
-          fs.writeFileSync(filePath, fileBuffer);
-          console.log(`Downloaded file to ${filePath}`);
-        } else {
-          console.error('Failed to download the file.');
+        const res = await this.download(url, name);
+        if (res != null) {
+          const { content: fileBuffer, name: filename } = res;
+          if (fileBuffer) {
+            const filePath = path.join('downloads', filename);
+            fs.writeFileSync(filePath, fileBuffer);
+            console.log(`Downloaded file to ${filePath}`);
+          } else {
+            console.error('Failed to download the file.');
+          }
         }
       } else if (this.isGoogleDriveFolder(url)) {
         console.log('The link is a Google Drive folder.');
@@ -74,7 +82,21 @@ export class GoogleService {
       // Handle non-Google links
       try {
         const response = await axios.get(url, { responseType: 'arraybuffer' });
-        const fileName = path.basename(url);
+
+        // Attempt to extract filename from Content-Disposition header
+        const contentDisposition = response.headers['content-disposition'];
+        let fileName: string;
+
+        if (contentDisposition && contentDisposition.includes('filename=')) {
+          fileName = contentDisposition
+            .split('filename=')[1]
+            .split(';')[0]
+            .replace(/['"]/g, '');
+        } else {
+          // Fallback to the provided name argument
+          fileName = name;
+        }
+
         const filePath = path.join('downloads', fileName);
         fs.writeFileSync(filePath, response.data);
         console.log(`Downloaded file to ${filePath}`);
@@ -84,7 +106,13 @@ export class GoogleService {
     }
   }
 
-  public async download(url: string): Promise<Buffer | null> {
+  public async download(
+    url: string,
+    name: string,
+  ): Promise<{
+    content: Buffer;
+    name: string | null;
+  } | null> {
     const fileId = this.extractFileId(url);
     if (
       this.isGoogleDocs(url) ||
@@ -92,27 +120,56 @@ export class GoogleService {
       this.isGoogleDriveFile(url)
     ) {
       const exportUrl = this.getExportUrl(url, fileId);
-      return this.downloadFile(exportUrl);
+      return this.downloadFile(exportUrl, name);
     }
     return null;
   }
 
-  public async downloadAsExcel(url: string): Promise<Buffer | null> {
+  public async downloadAsExcel(
+    url: string,
+    name: string,
+  ): Promise<{
+    content: Buffer;
+    name: string | null;
+  }> {
     const fileId = this.extractFileId(url);
     if (
       this.isGoogleSheet(url) ||
       (this.isGoogleDriveFile(url) && this.isExcelFile(url))
     ) {
       const exportUrl = `https://docs.google.com/spreadsheets/d/${fileId}/export?format=xlsx`;
-      return this.downloadFile(exportUrl);
+      return this.downloadFile(exportUrl, name);
     }
     return null;
   }
 
-  private async downloadFile(url: string): Promise<Buffer | null> {
+  private async downloadFile(
+    url: string,
+    name: string,
+  ): Promise<{
+    content: Buffer;
+    name: string | null;
+  }> {
     try {
       const response = await axios.get(url, { responseType: 'arraybuffer' });
-      return response.data;
+
+      const contentDisposition = response.headers['content-disposition'];
+      let filename: string;
+
+      if (contentDisposition && name) {
+        const match = contentDisposition.match(/filename="(.+?)"/);
+        const originalName = match ? match[1] : '';
+        const extension = originalName.split('.').pop();
+        filename = `${name.trim()}.${extension}`;
+      } else {
+        const match = contentDisposition.match(/filename="(.+)"/);
+        filename = match ? match[1] : '';
+      }
+
+      return {
+        content: response.data,
+        name: filename,
+      };
     } catch (error) {
       return null;
     }

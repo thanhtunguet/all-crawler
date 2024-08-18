@@ -7,7 +7,7 @@ import {
   DB_PORT,
   DB_USERNAME,
 } from 'src/config/dotenv';
-import * as entities from '../entities';
+import * as entities from '../../entities';
 
 @Module({
   imports: [
@@ -22,5 +22,6 @@ import * as entities from '../entities';
       synchronize: true,
     }),
   ],
+  exports: [TypeOrmModule.forFeature(Object.values(entities))],
 })
 export class DatabaseModule {}

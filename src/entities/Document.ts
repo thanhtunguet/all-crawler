@@ -5,46 +5,46 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
-} from "typeorm";
-import { FileType } from "./FileType";
-import { Category } from "./Category";
+} from 'typeorm';
+import { Category } from './Category';
+import { FileType } from './FileType';
 
-@Index("fileTypeId", ["fileTypeId"], {})
-@Index("categoryId", ["categoryId"], {})
-@Entity("Document", { schema: "AllCrawler" })
+@Index('fileTypeId', ['fileTypeId'], {})
+@Index('categoryId', ['categoryId'], {})
+@Entity('Document', { schema: 'AllCrawler' })
 export class Document {
-  @PrimaryGeneratedColumn({ type: "int", name: "id" })
+  @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
 
-  @Column("int", { name: "categoryId" })
+  @Column('int', { name: 'categoryId' })
   categoryId: number;
 
-  @Column("varchar", { name: "link", nullable: true, length: 255 })
+  @Column('varchar', { name: 'link', nullable: true, length: 255 })
   link: string | null;
 
-  @Column("varchar", { name: "name", nullable: true, length: 255 })
+  @Column('varchar', { name: 'name', nullable: true, length: 255 })
   name: string | null;
 
-  @Column("text", { name: "description", nullable: true })
+  @Column('text', { name: 'description', nullable: true })
   description: string | null;
 
-  @Column("varchar", { name: "originalId", nullable: true, length: 255 })
+  @Column('varchar', { name: 'originalId', nullable: true, length: 255 })
   originalId: string | null;
 
-  @Column("int", { name: "fileTypeId" })
+  @Column('int', { name: 'fileTypeId' })
   fileTypeId: number;
 
   @ManyToOne(() => FileType, (fileType) => fileType.documents, {
-    onDelete: "RESTRICT",
-    onUpdate: "RESTRICT",
+    onDelete: 'RESTRICT',
+    onUpdate: 'RESTRICT',
   })
-  @JoinColumn([{ name: "fileTypeId", referencedColumnName: "id" }])
+  @JoinColumn([{ name: 'fileTypeId', referencedColumnName: 'id' }])
   fileType: FileType;
 
   @ManyToOne(() => Category, (category) => category.documents, {
-    onDelete: "RESTRICT",
-    onUpdate: "RESTRICT",
+    onDelete: 'RESTRICT',
+    onUpdate: 'RESTRICT',
   })
-  @JoinColumn([{ name: "categoryId", referencedColumnName: "id" }])
+  @JoinColumn([{ name: 'categoryId', referencedColumnName: 'id' }])
   category: Category;
 }

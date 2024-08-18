@@ -1,12 +1,7 @@
 import { BadRequestException, Controller, Get, Inject } from '@nestjs/common';
-import {
-  ClientProxy,
-  Ctx,
-  EventPattern,
-  MqttContext,
-  Payload,
-} from '@nestjs/microservices';
+import { ClientProxy, EventPattern, Payload } from '@nestjs/microservices';
 import { ApiTags } from '@nestjs/swagger';
+import { GoogleService } from '../google/google.service';
 import { TldkCategoryJob } from './dtos/category-job.dto';
 import { TldkDocumentJob } from './dtos/document-job.dto';
 import TaiLieuDieuKyRepository from './tldk.repository';
@@ -20,7 +15,20 @@ export class TldkController {
     private readonly tldkService: TldkService,
     @Inject('MQTT_SERVICE')
     private readonly client: ClientProxy,
+    private readonly googleService: GoogleService,
   ) {}
+
+  @Get('/categories')
+  public async categories() {
+    try {
+      const masterPages = await this.repository.getListMasterPages();
+      await this.tldkService.saveCategories(masterPages);
+      return masterPages;
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      return new BadRequestException();
+    }
+  }
 
   @Get('/start')
   public async startTheJob() {
@@ -30,29 +38,15 @@ export class TldkController {
     };
   }
 
-  @Get('/categories')
-  public async crawl() {
-    try {
-      const masterPages = await this.repository.getListMasterPages();
-      return masterPages;
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      return new BadRequestException();
-    }
-  }
-
   @EventPattern(TldkCategoryJob.CATEGORY_JOB)
   public async handleCategory(@Payload() category: TldkCategoryJob) {
+    console.log(`Received category job: ${JSON.stringify(category)}`);
     await this.tldkService.getDocumentsByCategory(category);
   }
 
   @EventPattern(TldkDocumentJob.DOCUMENT_JOB)
-  public async handleDocument(
-    @Payload() document: TldkDocumentJob,
-    @Ctx() context: MqttContext,
-  ) {
-    console.log(context.getTopic());
+  public async handleDocument(@Payload() document: TldkDocumentJob) {
     console.log(`Received document job: ${JSON.stringify(document)}`);
-    this.tldkService.download(document.link);
+    this.googleService.downloadLink(document.link, document.name);
   }
 }

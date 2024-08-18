@@ -12,16 +12,22 @@ import TaiLieuDieuKyRepository from './tldk.repository';
 @Injectable()
 export class TldkService implements OnModuleInit {
   constructor(
+    //
     private readonly repository: TaiLieuDieuKyRepository,
+    //
     @InjectRepository(TldkLink)
     private readonly linkPageRepository: Repository<TldkLink>,
+    //
     @InjectRepository(TldkCategory)
     private readonly categoryRepository: Repository<TldkCategory>,
+    //
     private readonly googleService: GoogleService,
-    @Inject('MQTT_SERVICE') private readonly mqttClient: ClientProxy,
+    //
+    @Inject('MQTT_SERVICE')
+    private readonly mqttClient: ClientProxy,
   ) {}
 
-  async onModuleInit() {
+  public async onModuleInit() {
     try {
       await this.mqttClient.connect();
       console.log('Connected to MQTT_SERVICE successfully.');
@@ -30,23 +36,27 @@ export class TldkService implements OnModuleInit {
     }
   }
 
+  public async saveCategories(categories: TldkCategory[]) {
+    await this.categoryRepository.clear();
+    await this.categoryRepository.save(categories);
+  }
+
   public async start() {
     const categories = await this.categoryRepository.find();
-
     const jobs = categories
       .map((category) => {
         const jobs = [];
         for (let i = 1; i <= category.numberOfPage; i++) {
           const job = new TldkCategoryJob();
           job.link = category.categoryLink;
+          job.name = category.name;
           job.page = i;
           jobs.push(job);
         }
         return jobs;
       })
       .flat();
-
-    this.pushCategoriesToQueue(jobs);
+    await this.pushCategoriesToQueue(jobs);
   }
 
   public async getDocumentsByCategory(
@@ -56,11 +66,12 @@ export class TldkService implements OnModuleInit {
     const page = job.page;
 
     // Handle Article
-    if (this.isArticle(link)) {
+    if (this.isArticleCategory(link)) {
       const articles = await this.repository.getArticleLinks(link, page);
       const documents = articles.map((article) => {
         const documentJob = new TldkDocumentJob();
-        documentJob.link = article;
+        documentJob.link = article.link;
+        documentJob.name = article.name;
         return documentJob;
       });
       await this.pushDocumentsToQueue(documents);
@@ -68,29 +79,24 @@ export class TldkService implements OnModuleInit {
     }
 
     // Handle Ebook
-    if (this.isEbook(link)) {
+    if (this.isEbookCategory(link)) {
       const ebooks = await this.repository.getEbookLinks(link, page);
       const documents = ebooks.map((ebook) => {
         const documentJob = new TldkDocumentJob();
-        documentJob.link = ebook;
+        documentJob.link = ebook.link;
+        documentJob.name = ebook.name;
         return documentJob;
       });
-      console.log(documents);
       await this.pushDocumentsToQueue(documents);
       return;
     }
   }
 
-  public async download(link: string) {
-    await this.googleService.downloadLink(link);
-    console.log(`Downloaded link success: ${link}`);
+  private isArticleCategory(link: string) {
+    return link.match(/baiviet\/tag/);
   }
 
-  private isArticle(link: string) {
-    return link.match(/baiviet/);
-  }
-
-  private isEbook(link: string) {
+  private isEbookCategory(link: string) {
     return link.match(/ebook/);
   }
 
@@ -100,40 +106,9 @@ export class TldkService implements OnModuleInit {
     }
   }
 
-  async pushCategoriesToQueue(categories: TldkCategoryJob[]) {
+  public async pushCategoriesToQueue(categories: TldkCategoryJob[]) {
     for (const category of categories) {
       this.mqttClient.emit(TldkCategoryJob.CATEGORY_JOB, category);
-    }
-  }
-
-  async crawl(): Promise<void> {
-    const masterPages = await this.repository.getListMasterPages();
-    for (const masterPage of masterPages) {
-      const { categoryLink, numberOfPage } = masterPage;
-      for (let page = 1; page <= numberOfPage; page++) {
-        const ebookLinks = await this.repository.getEbookLinks(
-          categoryLink,
-          page,
-        );
-        const articleLinks = await this.repository.getArticleLinks(
-          categoryLink,
-          page,
-        );
-
-        const documentLinks = [...ebookLinks, ...articleLinks];
-
-        for (const documentLink of documentLinks) {
-          const linkPage = this.linkPageRepository.create();
-          linkPage.categoryLink = categoryLink;
-          linkPage.pageNumber = page;
-          linkPage.documentLink = documentLink;
-          linkPage.googleDriveId = this.googleService.getId(documentLink);
-          linkPage.isGoogleDocs = this.googleService.isGoogleDocs(documentLink);
-          linkPage.isFolder =
-            this.googleService.isGoogleDriveFolder(documentLink);
-          await this.linkPageRepository.save(linkPage);
-        }
-      }
     }
   }
 }

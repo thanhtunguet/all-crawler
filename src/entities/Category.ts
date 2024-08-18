@@ -6,33 +6,36 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-} from "typeorm";
-import { Website } from "./Website";
-import { Document } from "./Document";
+} from 'typeorm';
+import { Document } from './Document';
+import { Website } from './Website';
 
-@Index("websiteId", ["websiteId"], {})
-@Entity("Category", { schema: "AllCrawler" })
+@Index('websiteId', ['websiteId'], {})
+@Entity('Category', { schema: 'AllCrawler' })
 export class Category {
-  @PrimaryGeneratedColumn({ type: "int", name: "id" })
+  @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
 
-  @Column("int", { name: "websiteId" })
+  @Column('int', { name: 'websiteId' })
   websiteId: number;
 
-  @Column("varchar", { name: "name", length: 255 })
+  @Column('varchar', { name: 'name', length: 255 })
   name: string;
 
-  @Column("varchar", { name: "link", nullable: true, length: 255 })
+  @Column('varchar', { name: 'link', nullable: true, length: 255 })
   link: string | null;
 
-  @Column("text", { name: "description", nullable: true })
+  @Column('int', { name: 'numberOfPages', nullable: true })
+  numberOfPages: number | null;
+
+  @Column('text', { name: 'description', nullable: true })
   description: string | null;
 
   @ManyToOne(() => Website, (website) => website.categories, {
-    onDelete: "RESTRICT",
-    onUpdate: "RESTRICT",
+    onDelete: 'RESTRICT',
+    onUpdate: 'RESTRICT',
   })
-  @JoinColumn([{ name: "websiteId", referencedColumnName: "id" }])
+  @JoinColumn([{ name: 'websiteId', referencedColumnName: 'id' }])
   website: Website;
 
   @OneToMany(() => Document, (document) => document.category)
