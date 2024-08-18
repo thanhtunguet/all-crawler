@@ -19,7 +19,7 @@ import * as entities from '../../entities';
       password: DB_PASSWORD,
       database: DB_DATABASE,
       entities: Object.values(entities),
-      synchronize: true,
+      synchronize: false,
     }),
   ],
   exports: [TypeOrmModule.forFeature(Object.values(entities))],

@@ -1,9 +1,9 @@
-import { BadRequestException, Controller, Get, Inject } from '@nestjs/common';
-import { ClientProxy, EventPattern, Payload } from '@nestjs/microservices';
+import { BadRequestException, Controller, Get } from '@nestjs/common';
+import { EventPattern } from '@nestjs/microservices';
 import { ApiTags } from '@nestjs/swagger';
+import { AxiosError } from 'axios';
+import { TldkCategory } from 'src/entities';
 import { GoogleService } from '../google/google.service';
-import { TldkCategoryJob } from './dtos/category-job.dto';
-import { TldkDocumentJob } from './dtos/document-job.dto';
 import TaiLieuDieuKyRepository from './tldk.repository';
 import { TldkService } from './tldk.service';
 
@@ -13,8 +13,6 @@ export class TldkController {
   constructor(
     private readonly repository: TaiLieuDieuKyRepository,
     private readonly tldkService: TldkService,
-    @Inject('MQTT_SERVICE')
-    private readonly client: ClientProxy,
     private readonly googleService: GoogleService,
   ) {}
 
@@ -30,23 +28,36 @@ export class TldkController {
     }
   }
 
-  @Get('/start')
-  public async startTheJob() {
-    await this.tldkService.start();
-    return {
-      message: 'Job started',
-    };
-  }
+  @EventPattern('category/topic')
+  public async handleCategory() {
+    try {
+      let categories: TldkCategory[];
+      categories = await this.repository.getListMasterPages();
+      await this.tldkService.saveCategories(categories);
+      categories = await this.tldkService.getCategories();
 
-  @EventPattern(TldkCategoryJob.CATEGORY_JOB)
-  public async handleCategory(@Payload() category: TldkCategoryJob) {
-    console.log(`Received category job: ${JSON.stringify(category)}`);
-    await this.tldkService.getDocumentsByCategory(category);
-  }
+      for (const category of categories) {
+        for (let i = 1; i <= category.page; i++) {
+          const job = new TldkCategory();
 
-  @EventPattern(TldkDocumentJob.DOCUMENT_JOB)
-  public async handleDocument(@Payload() document: TldkDocumentJob) {
-    console.log(`Received document job: ${JSON.stringify(document)}`);
-    this.googleService.downloadLink(document.link, document.name);
+          job.id = category.id;
+          job.link = category.link;
+          job.name = category.name;
+          job.page = i;
+
+          try {
+            const documents =
+              await this.tldkService.getDocumentsByCategory(job);
+            await this.tldkService.saveDocuments(documents);
+          } catch (error) {
+            console.log(
+              `Ignore ${(error as AxiosError).response.status} error from ${job.link}`,
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`Error handling category: ${(error as Error).message}`);
+    }
   }
 }

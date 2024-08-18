@@ -1,95 +1,73 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TldkCategory } from 'src/entities';
-import { TldkLink } from 'src/entities/TldkLink';
+import { TldkCategory, TldkDocument } from 'src/entities';
 import { Repository } from 'typeorm';
-import { GoogleService } from '../google/google.service';
-import { TldkCategoryJob } from './dtos/category-job.dto';
-import { TldkDocumentJob } from './dtos/document-job.dto';
 import TaiLieuDieuKyRepository from './tldk.repository';
 
 @Injectable()
-export class TldkService implements OnModuleInit {
+export class TldkService {
   constructor(
-    //
-    private readonly repository: TaiLieuDieuKyRepository,
-    //
-    @InjectRepository(TldkLink)
-    private readonly linkPageRepository: Repository<TldkLink>,
-    //
     @InjectRepository(TldkCategory)
     private readonly categoryRepository: Repository<TldkCategory>,
-    //
-    private readonly googleService: GoogleService,
-    //
-    @Inject('MQTT_SERVICE')
-    private readonly mqttClient: ClientProxy,
+    @InjectRepository(TldkDocument)
+    private readonly documentRepository: Repository<TldkDocument>,
+    private readonly repository: TaiLieuDieuKyRepository,
   ) {}
 
-  public async onModuleInit() {
-    try {
-      await this.mqttClient.connect();
-      console.log('Connected to MQTT_SERVICE successfully.');
-    } catch (error) {
-      console.error('Failed to connect to RabbitMQ queues:', error);
-    }
-  }
-
   public async saveCategories(categories: TldkCategory[]) {
-    await this.categoryRepository.clear();
     await this.categoryRepository.save(categories);
   }
 
-  public async start() {
-    const categories = await this.categoryRepository.find();
-    const jobs = categories
-      .map((category) => {
-        const jobs = [];
-        for (let i = 1; i <= category.numberOfPage; i++) {
-          const job = new TldkCategoryJob();
-          job.link = category.categoryLink;
-          job.name = category.name;
-          job.page = i;
-          jobs.push(job);
-        }
-        return jobs;
-      })
-      .flat();
-    await this.pushCategoriesToQueue(jobs);
+  public async getCategories(): Promise<TldkCategory[]> {
+    return await this.categoryRepository.find();
+  }
+
+  public async saveDocuments(documents: TldkDocument[]) {
+    const MAX = 500;
+    for (let i = 0; i < documents.length; i += MAX) {
+      await this.documentRepository.save(documents.slice(i, i + MAX));
+    }
   }
 
   public async getDocumentsByCategory(
-    job: TldkCategoryJob,
-  ): Promise<TldkDocumentJob[]> {
-    const link = job.link;
-    const page = job.page;
-
+    category: TldkCategory,
+  ): Promise<TldkDocument[]> {
     // Handle Article
-    if (this.isArticleCategory(link)) {
-      const articles = await this.repository.getArticleLinks(link, page);
+    if (this.isArticleCategory(category.link)) {
+      const articles = await this.repository.getArticleLinks(
+        category.link,
+        category.page,
+      );
       const documents = articles.map((article) => {
-        const documentJob = new TldkDocumentJob();
-        documentJob.link = article.link;
-        documentJob.name = article.name;
-        return documentJob;
+        const document: TldkDocument = this.documentRepository.create();
+        document.link = article.link;
+        document.name = article.name;
+        document.category = category;
+        document.categoryPage = category.page;
+        return document;
       });
-      await this.pushDocumentsToQueue(documents);
-      return;
+      return documents;
     }
 
     // Handle Ebook
-    if (this.isEbookCategory(link)) {
-      const ebooks = await this.repository.getEbookLinks(link, page);
+    if (this.isEbookCategory(category.link)) {
+      const ebooks = await this.repository.getEbookLinks(
+        category.link,
+        category.page,
+      );
       const documents = ebooks.map((ebook) => {
-        const documentJob = new TldkDocumentJob();
-        documentJob.link = ebook.link;
-        documentJob.name = ebook.name;
-        return documentJob;
+        const document = this.documentRepository.create();
+        document.link = ebook.link;
+        document.name = ebook.name;
+        document.category = category;
+        document.categoryPage = category.page;
+        return document;
       });
-      await this.pushDocumentsToQueue(documents);
-      return;
+      return documents;
     }
+
+    //
+    return [];
   }
 
   private isArticleCategory(link: string) {
@@ -98,17 +76,5 @@ export class TldkService implements OnModuleInit {
 
   private isEbookCategory(link: string) {
     return link.match(/ebook/);
-  }
-
-  public async pushDocumentsToQueue(documents: TldkDocumentJob[]) {
-    for (const document of documents) {
-      await this.mqttClient.emit(TldkDocumentJob.DOCUMENT_JOB, document);
-    }
-  }
-
-  public async pushCategoriesToQueue(categories: TldkCategoryJob[]) {
-    for (const category of categories) {
-      this.mqttClient.emit(TldkCategoryJob.CATEGORY_JOB, category);
-    }
   }
 }

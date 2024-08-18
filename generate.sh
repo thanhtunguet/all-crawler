@@ -6,6 +6,4 @@ rm -rf src/entities/
 mv output/entities/ src/entities/
 rm -rf output/
 yarn node-index update src/entities/
-yarn eslint --fix
-
-
+yarn eslint --fix src/entities/*.ts

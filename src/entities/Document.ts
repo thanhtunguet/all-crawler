@@ -6,8 +6,8 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Category } from './Category';
 import { FileType } from './FileType';
+import { Category } from './Category';
 
 @Index('fileTypeId', ['fileTypeId'], {})
 @Index('categoryId', ['categoryId'], {})

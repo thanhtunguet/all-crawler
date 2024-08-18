@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { TldkCategory } from 'src/entities';
+import { TldkCategory, TldkDocument } from 'src/entities';
 import { slugify } from 'src/helpers/slugify';
-import { DocumentDto } from './dtos/document.dto';
 
 @Injectable()
 class TaiLieuDieuKyRepository {
@@ -20,17 +19,17 @@ class TaiLieuDieuKyRepository {
     }
   }
 
-  async getEbookLinks(link: string, page: number): Promise<DocumentDto[]> {
+  async getEbookLinks(link: string, page: number): Promise<TldkDocument[]> {
     try {
       const pageNumber = page < 10 ? `0${page}` : `${page}`;
       const pageLink = link.replace(/page=[0-9]+/, `page=${pageNumber}`);
       const response = await axios.get(pageLink);
       const $ = cheerio.load(response.data);
-      const ebookLinks: DocumentDto[] = [];
+      const ebookLinks: TldkDocument[] = [];
       $('.book-item').each(function () {
         const href = $(this).find('a').attr('href');
         const name = $(this).find('h2.booktitle').text();
-        const document = new DocumentDto();
+        const document = new TldkDocument();
         document.link = href;
         document.name = name;
         if (!!href && !!name) ebookLinks.push(document);
@@ -45,11 +44,11 @@ class TaiLieuDieuKyRepository {
     }
   }
 
-  async getArticleLinks(link: string, page: number): Promise<DocumentDto[]> {
+  async getArticleLinks(link: string, page: number): Promise<TldkDocument[]> {
     try {
       const pageLink = `${link.replace(/page\/[0-9]+\//, '')}page/${page}/`;
       console.log(pageLink);
-      const documents: DocumentDto[] = [];
+      const documents: TldkDocument[] = [];
       const response = await axios.get(pageLink);
       const $ = cheerio.load(response.data);
 
@@ -66,7 +65,7 @@ class TaiLieuDieuKyRepository {
         $('.download a').each(function () {
           const downloadHref = $(this).attr('href');
           const name = $(this).text().trim();
-          const document = new DocumentDto();
+          const document = new TldkDocument();
           document.link = downloadHref;
           document.name = name.replace('Tải xuống: ', '');
           documents.push(document);
@@ -100,8 +99,8 @@ class TaiLieuDieuKyRepository {
               const tldk: TldkCategory = new TldkCategory();
               tldk.name = title;
               tldk.slug = slugify(title);
-              tldk.categoryLink = href;
-              tldk.numberOfPage = lastPage;
+              tldk.link = href;
+              tldk.page = lastPage;
               return tldk;
             });
             promises.push(promise);

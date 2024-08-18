@@ -1,13 +1,4 @@
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
-import { GritArticle } from './GritArticle';
-import { GritGoogleDocs } from './GritGoogleDocs';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('GritDocument', { schema: 'AllCrawler' })
 export class GritDocument {
@@ -59,16 +50,6 @@ export class GritDocument {
   @Column('tinyint', { name: 'feeType', nullable: true })
   feeType: number | null;
 
-  @OneToOne(
-    () => GritGoogleDocs,
-    (gritGoogleDocs) => gritGoogleDocs.gritDocument,
-  )
-  gritGoogleDocs: GritGoogleDocs;
-
-  @ManyToOne(() => GritArticle, (gritArticle) => gritArticle.gritDocuments, {
-    onDelete: 'RESTRICT',
-    onUpdate: 'RESTRICT',
-  })
-  @JoinColumn([{ name: 'gritArticleId', referencedColumnName: 'id' }])
-  gritArticle: GritArticle;
+  @Column('int', { name: 'gritArticleId', nullable: true })
+  gritArticleId: number | null;
 }

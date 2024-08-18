@@ -7,8 +7,8 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Document } from './Document';
 import { Website } from './Website';
+import { Document } from './Document';
 
 @Index('websiteId', ['websiteId'], {})
 @Entity('Category', { schema: 'AllCrawler' })
@@ -25,11 +25,11 @@ export class Category {
   @Column('varchar', { name: 'link', nullable: true, length: 255 })
   link: string | null;
 
-  @Column('int', { name: 'numberOfPages', nullable: true })
-  numberOfPages: number | null;
-
   @Column('text', { name: 'description', nullable: true })
   description: string | null;
+
+  @Column('int', { name: 'numberOfPages', nullable: true })
+  numberOfPages: number | null;
 
   @ManyToOne(() => Website, (website) => website.categories, {
     onDelete: 'RESTRICT',

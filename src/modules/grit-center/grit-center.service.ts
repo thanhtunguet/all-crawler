@@ -51,7 +51,6 @@ export class GritCenterService {
         documentDAO.filePdf = document.file_pdf;
         documentDAO.slug = document.slug;
         documentDAO.feeType = Number(document.fee_type);
-        documentDAO.gritArticle = articleDAO;
         return documentDAO;
       });
       await this.gritDocumentRepository.insert(documents);
