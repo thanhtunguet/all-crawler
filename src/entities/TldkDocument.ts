@@ -23,11 +23,13 @@ export class TldkDocument {
   @Column('bigint', { name: 'categoryId', nullable: true })
   categoryId: string | null;
 
-  @Column('varchar', { name: 'categoryName', nullable: true, length: 255 })
-  categoryName: string | null;
-
-  @Column('bigint', { name: 'categoryPage', nullable: true })
-  categoryPage: number | null;
+  @Column('tinyint', {
+    name: 'isDownloaded',
+    nullable: true,
+    width: 1,
+    default: () => "'0'",
+  })
+  isDownloaded: boolean | null;
 
   @Column('timestamp', {
     name: 'createdAt',

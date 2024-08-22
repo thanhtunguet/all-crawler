@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import axios from 'axios';
+import { createWriteStream } from 'fs';
+import * as path from 'path';
 import { TldkCategory, TldkDocument } from 'src/entities';
 import { Repository } from 'typeorm';
 import TaiLieuDieuKyRepository from './tldk.repository';
@@ -29,6 +32,12 @@ export class TldkService {
     }
   }
 
+  public async getDocuments(): Promise<TldkDocument[]> {
+    return await this.documentRepository.find({
+      relations: ['category'],
+    });
+  }
+
   public async getDocumentsByCategory(
     category: TldkCategory,
   ): Promise<TldkDocument[]> {
@@ -43,7 +52,6 @@ export class TldkService {
         document.link = article.link;
         document.name = article.name;
         document.category = category;
-        document.categoryPage = category.page;
         return document;
       });
       return documents;
@@ -60,7 +68,6 @@ export class TldkService {
         document.link = ebook.link;
         document.name = ebook.name;
         document.category = category;
-        document.categoryPage = category.page;
         return document;
       });
       return documents;
@@ -76,5 +83,30 @@ export class TldkService {
 
   private isEbookCategory(link: string) {
     return link.match(/ebook/);
+  }
+
+  public async downloadLink(link: string) {
+    const response = await axios({
+      url: link,
+      method: 'GET',
+      responseType: 'stream',
+    });
+
+    const filename =
+      response.headers['content-disposition']
+        ?.split('filename=')[1]
+        .replace(/"/g, '') || path.basename(link);
+
+    const ext = path.extname(filename) || path.extname(response.request.path);
+    const name = path.basename(filename, ext);
+
+    const filePath = `./downloads/${name}${ext}`;
+    const writer = createWriteStream(filePath);
+    response.data.pipe(writer);
+
+    return new Promise<void>((resolve, reject) => {
+      writer.on('finish', resolve);
+      writer.on('error', reject);
+    });
   }
 }

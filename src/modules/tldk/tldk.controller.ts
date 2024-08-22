@@ -60,4 +60,20 @@ export class TldkController {
       console.error(`Error handling category: ${(error as Error).message}`);
     }
   }
+
+  @EventPattern('document/topic')
+  public async handleDocument() {
+    const documents = await this.tldkService.getDocuments();
+    for (const document of documents) {
+      try {
+        if (this.googleService.isGoogleLink(document.link)) {
+          await this.googleService.downloadLink(document.link, document.name);
+        } else {
+          await this.tldkService.downloadLink(document.link);
+        }
+        document.isDownloaded = true;
+        await this.tldkService.saveDocuments([document]);
+      } catch (error) {}
+    }
+  }
 }

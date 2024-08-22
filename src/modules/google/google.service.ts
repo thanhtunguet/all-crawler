@@ -15,10 +15,6 @@ export class GoogleService {
     return url.includes('docs.google.com/document');
   }
 
-  public isGoogleSheet(url: string): boolean {
-    return url.includes('docs.google.com/spreadsheets');
-  }
-
   public isGoogleDriveFile(url: string): boolean {
     return url.includes('drive.google.com/file');
   }
@@ -53,7 +49,7 @@ export class GoogleService {
       (this.isGoogleDriveFile(url) && this.isDocFile(url))
     ) {
       const exportUrl = `https://docs.google.com/feeds/download/documents/export/Export?id=${fileId}&exportFormat=docx`;
-      return this.downloadFile(exportUrl, name);
+      return this.downloadFile(exportUrl, `${name}.docx`);
     }
     return null;
   }
@@ -114,30 +110,8 @@ export class GoogleService {
     name: string | null;
   } | null> {
     const fileId = this.extractFileId(url);
-    if (
-      this.isGoogleDocs(url) ||
-      this.isGoogleSheet(url) ||
-      this.isGoogleDriveFile(url)
-    ) {
+    if (this.isGoogleDocs(url) || this.isGoogleDriveFile(url)) {
       const exportUrl = this.getExportUrl(url, fileId);
-      return this.downloadFile(exportUrl, name);
-    }
-    return null;
-  }
-
-  public async downloadAsExcel(
-    url: string,
-    name: string,
-  ): Promise<{
-    content: Buffer;
-    name: string | null;
-  }> {
-    const fileId = this.extractFileId(url);
-    if (
-      this.isGoogleSheet(url) ||
-      (this.isGoogleDriveFile(url) && this.isExcelFile(url))
-    ) {
-      const exportUrl = `https://docs.google.com/spreadsheets/d/${fileId}/export?format=xlsx`;
       return this.downloadFile(exportUrl, name);
     }
     return null;
@@ -178,8 +152,6 @@ export class GoogleService {
   private getExportUrl(url: string, fileId: string): string {
     if (this.isGoogleDocs(url)) {
       return `https://docs.google.com/document/d/${fileId}/export?format=docx`;
-    } else if (this.isGoogleSheet(url)) {
-      return `https://docs.google.com/spreadsheets/d/${fileId}/export?format=xlsx`;
     } else if (this.isGoogleDriveFile(url)) {
       return `https://drive.google.com/uc?id=${fileId}&export=download`;
     }
@@ -189,11 +161,6 @@ export class GoogleService {
   private isDocFile(url: string): boolean {
     // This method would ideally check if the Google Drive file is a word processing document
     return url.endsWith('.docx') || url.endsWith('.odt');
-  }
-
-  private isExcelFile(url: string): boolean {
-    // This method would ideally check if the Google Drive file is an Excel file
-    return url.endsWith('.xlsx') || url.endsWith('.ods');
   }
 
   public isGoogleLink(url: string): boolean {
